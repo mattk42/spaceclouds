@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Cloudspaces</title>
+<body align=middle>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" />
+<link rel="stylesheet" href="main.css" />
+<script src="https://d3js.org/d3.v3.min.js"></script>
+<script src="./d3.layout.cloud.js"></script>
+<script src="./cloud.js"></script>
+<script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+
+<form id="topicForm"> <input id="input" type="text" placeholder="Add A Topic"></input><br> </form>
+
+<div id="tabs">
+  <ul>
+    <li><a href="#cloudtab">Word Cloud</a></li>
+    <li><a href="#statstab">Stats</a></li>
+  </ul>
+  <div id="cloudtab">
+    <div id="cloud"></div>
+  </div>
+  <div id="statstab">
+    <table id='stats'><tr><th>Top Entries</th><th>New Entries</th></tr>
+    <tr>
+       <td><div id="top_topics"></div></td>
+      <td><div id="new_topics"></div></td>
+    </tr>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+var words = [];
+var last_update_time = 0;
+var myWordCloud = wordCloud('#cloud');
+var update_now = true;
+var ws;
+var server = window.location.hostname;
+var wsUri = "ws://"+server;
+
+function firstNMatches(needle,n){
+  var matches = [];
+  var re = new RegExp(".*"+needle.toLowerCase()+".*");
+  console.log(JSON.stringify(words.topics));
+  for (var i = 0; i < words.topics.length; i++) {
+    if (words.topics[i].text.toLowerCase().match(re)){
+       matches.push(words.topics[i].text);
+       if ( matches.length == n ){
+         break;
+       }
+    }
+  }
+  return matches;
+}
+
+
+$( "#input" ).autocomplete({
+  source: function(request, response){
+    if ( request.term.length < 3 ) { response([]); return false; }
+    response(firstNMatches(request.term,5));
+  }
+});
+
+if ( location.port ){
+  var wsUri = "ws://"+server+":"+location.port;
+}
+
+function start(wsUri) {  // Create the websocket
+    ws = new WebSocket(wsUri);
+
+    ws.onopen = function(evt) {
+        console.log("CONNECTED");
+    };
+
+    ws.onclose = function(evt) {
+        console.log("DISCONNECTED");
+        setTimeout(function(){ start(wsUri) }, 3000); // try to reconnect every 3 secs... bit fast ?
+    }
+
+    // This expects a websocket message with data as a stringified object containing at least name, lat and lon
+    ws.onmessage = function (evt) {
+        words = JSON.parse(evt.data);
+        if (update_now){
+          updateElements();
+        }
+    }
+
+    ws.onerror = function(evt) {
+        console.log("ERROR",evt);
+    }
+
+    // Handle submitting the tropic to the server
+    document.getElementById('topicForm').addEventListener("submit", function(e) {
+      var val = document.getElementById('input').value;
+      document.getElementById('input').value = "";
+      sendTopic(val);
+      e.preventDefault();
+    }, false);
+}
+
+function updateNewTopics(){
+  if ( words.new_topics.length >= 1 ){
+    $('#new_topics').html(words.new_topics.join("<br>"));
+  }
+}
+
+function updateTopTopics(){
+  var list = words.topics.slice(0,19);
+  if ( list.length >= 1 ){
+    $('#top_topics').html(list.map(function(d){ return d.text + " (" + d.value + ")" }).join('<br>'))
+  }
+}
+
+function sendTopic(topic){
+    if ( topic != "" ){
+      ws.send(topic);
+      update_now = true;
+    } else {
+      console.log("ERROR: Empty string attempt.");
+    }
+}
+
+// To prevent crashing the browser on heavy traffic, only
+// update the display every 700ms if a change is detected
+function updateElements(){
+   myWordCloud.update(words.topics.slice(0,100));
+   updateTopTopics();
+   updateNewTopics();
+   last_update_time = words.timestamp;
+   update_now = false;
+}
+
+setInterval( function(){
+ if (last_update_time != words.timestamp){
+   updateElements();
+ }
+}, 10000);
+
+$( function() {
+  $( "#tabs" ).tabs();
+} );
+
+start(wsUri);
+</script>
+
+</body>
+

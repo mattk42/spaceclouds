@@ -1,0 +1,61 @@
+body{
+    background-color: #b9f1ff;
+    background-image: url("background.png"), none;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    background-position: center; 
+}
+#input
+{
+background: #333;
+color: #ccc;
+width: 150px;
+padding: 6px 15px 6px 35px;
+border-radius: 20px;
+box-shadow: 0 1px 0 #ccc inset;
+transition:500ms all ease;
+height: 30px;
+width: 50%;
+}
+#input:hover
+{
+width:55%;
+}
+
+#tabs{
+  border: none;
+  position: relative;
+}
+.ui-tabs-nav, .ui-tabs, .ui-tabs-panel {
+    background: transparent;
+    border-width: 0px 0px 0px 0px;
+}
+.ui-tabs .ui-tabs-panel{
+  padding: 0px;
+}
+.ui-tabs-nav{
+    height: 2.35em;
+    text-align: center;
+}
+.ui-tabs .ui-tabs-nav li {
+    display: inline-block;
+    float: none;
+    margin: 0em;
+}
+
+#stats{
+  margin-left:auto; 
+  margin-right:auto;
+}
+
+#stats td{
+  text-align:left;
+  width: 35%;
+  padding: 20px;
+}
+
+#stats th{
+  font-size: 30px;
+}
+
+
