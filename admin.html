@@ -17,7 +17,7 @@ function load_topics(){
     var topics = JSON.parse(responseText);
     $('select').find('option').remove()
     for(var topic in topics){ 
-      var option = $('<option>', {value:topic, text:topic+" ("+topics[topic]+")"});
+      var option = $('<option>', {value:topics[topic].text, text:topics[topic].text+" ("+topics[topic].value+")"});
       $('select').append(option);
     }
   });
@@ -27,7 +27,7 @@ $( document ).ready(function() {
     $.ajax({
       url:"/admin/delete",
       type:"POST",
-      data:JSON.stringify({topic: $('#delete_topic').val(), admin_token: $('#admin_token').val()}),
+      data:JSON.stringify({topic: $('#delete_topic').val(), token: $('#admin_token').val()}),
       contentType:"application/json; charset=utf-8",
       dataType:"json",
       complete: function(){
@@ -42,7 +42,7 @@ $( document ).ready(function() {
     $.ajax({
       url:"/admin/merge",
       type:"POST",
-      data:JSON.stringify({from: $('#from_topic').val(),to: $('#into_topic').val(), admin_token: $('#admin_token').val()}),
+      data:JSON.stringify({from: $('#from_topic').val(),to: $('#into_topic').val(), token: $('#admin_token').val()}),
       contentType:"application/json; charset=utf-8",
       dataType:"json",
       complete: function(){
@@ -51,7 +51,22 @@ $( document ).ready(function() {
     });
 
     event.preventDefault();
-  });
+});
+
+ $( "#clear_topics" ).submit(function( event ) {
+    $.ajax({
+      url:"/admin/clear",
+      type:"POST",
+      data:JSON.stringify({ token: $('#admin_token').val() }),
+      contentType:"application/json; charset=utf-8",
+      dataType:"json",
+      complete: function(){
+        load_topics();
+      }
+    });
+
+    event.preventDefault();
+});
 
   load_topics();
 });
@@ -73,6 +88,9 @@ $( document ).ready(function() {
   <input type='submit'></submit>
 </form>
 
-
+<h1>Clear</h1>
+<form id="clear_topics">
+  <input type='submit'></submit>
+</form>
 
 </body>

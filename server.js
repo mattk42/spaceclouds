@@ -64,11 +64,16 @@ app.get('/admin', function(req, res, next){
 
 app.get('/topics', function(req, res, next){
   client.hgetall('topics', function(err,reply){
-    res.send(JSON.stringify(reply));
+    var word_array = [];
+    for (var key in reply) {
+      word_array.push({"text": key, "value": reply[key]});
+    }
+    word_array = word_array.sort(function(a,b) { return b.value - a.value; });
+    res.send(JSON.stringify(word_array));
   });
 });
 
-app.get('/admin/clear', admin_auth, function(req, res, next){
+app.post('/admin/clear', admin_auth, function(req, res, next){
   client.del('topics');
   client.del('new_topics');
   client.del('updated');
@@ -81,10 +86,8 @@ app.post('/admin/merge', admin_auth, function(req, res, next){
   to = toTitleCase(req.body.to);
   client.hget('topics',from, function(err,reply){
     var from_votes = parseInt(reply) || 0; 
-    console.log("from_votes: "+ from_votes);  
     client.hget('topics', to, function(err,reply){
       var to_votes = parseInt(reply) || 0;
-      console.log("to_votes: "+ to_votes);  
       client.hset('topics',to,(from_votes +to_votes), function(err,reply){
         console.log('deleting: '+from);
         client.hdel('topics',from);
