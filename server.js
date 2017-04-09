@@ -31,7 +31,7 @@ function admin_auth(req, res, next){
 
 function send_data(clients){
    var response = client.hgetall('topics', function(err, reply){
-       var words = reply;
+     var words = reply;
      var new_clients = client.lrange('new_topics',0,19, function(err,reply){
        var new_topics = reply;
        var updated = client.get('updated', function(err,reply){
@@ -58,6 +58,13 @@ function send_data(clients){
       });
     });
   });
+}
+
+function remove_topic(topic){
+  var date = new Date();
+  client.hdel('topics', topic);
+  client.lrem('new_topics',0,topic);
+  client.set("updated",date.getTime()+"");
 }
 
 app.use( bodyParser.json() );
@@ -106,8 +113,7 @@ app.post('/admin/merge', admin_auth, function(req, res, next){
       var to_votes = parseInt(reply) || 0;
       client.hset('topics',to,(from_votes +to_votes), function(err,reply){
         console.log('deleting: '+from);
-        client.hdel('topics',from);
-        client.set("updated",date.getTime()+"");
+        remove_topic(from);
         return res.redirect('/'); 
       });
     });
@@ -115,10 +121,8 @@ app.post('/admin/merge', admin_auth, function(req, res, next){
 });
 
 app.post('/admin/delete', admin_auth,  function(req, res, next){
-  var date = new Date();
-  topic = toTitleCase(req.body.topic);
-  client.hdel('topics',topic);
-  client.set("updated",date.getTime()+"");
+  var topic = toTitleCase(req.body.topic);
+  remove_topic(topic);
   return res.redirect('/'); 
 });
 

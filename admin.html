@@ -53,7 +53,7 @@ $( document ).ready(function() {
     event.preventDefault();
 });
 
- $( "#clear_topics" ).submit(function( event ) {
+ $( "#clear" ).click(function( event ) {
     $.ajax({
       url:"/admin/clear",
       type:"POST",
@@ -66,6 +66,10 @@ $( document ).ready(function() {
     });
 
     event.preventDefault();
+});
+
+$( "#refresh" ).click(function( event ) {
+  load_topics();
 });
 
   load_topics();
@@ -88,9 +92,8 @@ $( document ).ready(function() {
   <input type='submit'></submit>
 </form>
 
-<h1>Clear</h1>
-<form id="clear_topics">
-  <input type='submit'></submit>
-</form>
+<h1>Actions</h1>
+<input id='clear' type='button' color="red" value="Clear Topic"></input>
+<input id='refresh' type='button' value="refresh"></input>
 
 </body>

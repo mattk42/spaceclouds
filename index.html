@@ -41,7 +41,17 @@ var myWordCloud = wordCloud('#cloud');
 var update_now = true;
 var ws;
 var server = window.location.hostname;
-var wsUri = "ws://"+server;
+var protocol = window.location.protocol;
+
+if (protocol == "https:") {
+  var wsUri = "wss://"+server;
+} else {
+  var wsUri = "ws://"+server;
+}
+
+if ( location.port ){
+  var wsUri = "ws://"+server+":"+location.port;
+}
 
 function firstNMatches(needle,n){
   var matches = [];
@@ -65,10 +75,6 @@ $( "#input" ).autocomplete({
     response(firstNMatches(request.term,5));
   }
 });
-
-if ( location.port ){
-  var wsUri = "ws://"+server+":"+location.port;
-}
 
 function start(wsUri) {  // Create the websocket
     ws = new WebSocket(wsUri);
@@ -104,9 +110,7 @@ function start(wsUri) {  // Create the websocket
 }
 
 function updateNewTopics(){
-  if ( words.new_topics.length >= 1 ){
-    $('#new_topics').html(words.new_topics.join("<br>"));
-  }
+  $('#new_topics').html(words.new_topics.join("<br>"));
 }
 
 function updateTopTopics(){
