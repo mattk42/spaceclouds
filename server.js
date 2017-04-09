@@ -23,7 +23,8 @@ function toTitleCase(str){
 function admin_auth(req, res, next){
   token = req.body.token;
   if ( token != admin_token ){
-    res.status(401).send('You shall not pass.')
+    res.status(401).send('You shall not pass.');
+    return;
   }
   next();
 }
@@ -57,7 +58,17 @@ app.get('/', function(req, res, next){
   res.sendFile(path.join(__dirname+'/index.html'));
 });
 
-app.get('/clear', function(req, res, next){
+app.get('/admin', function(req, res, next){
+  res.sendFile(path.join(__dirname+'/admin.html'));
+});
+
+app.get('/topics', function(req, res, next){
+  client.hgetall('topics', function(err,reply){
+    res.send(JSON.stringify(reply));
+  });
+});
+
+app.get('/admin/clear', admin_auth, function(req, res, next){
   client.del('topics');
   client.del('new_topics');
   client.del('updated');
@@ -68,9 +79,13 @@ app.post('/admin/merge', admin_auth, function(req, res, next){
   var date = new Date();
   from = toTitleCase(req.body.from);
   to = toTitleCase(req.body.to);
-  client.hget('topics',from, function(err,from_votes){
-    client.hget('topics', to, function(err,to_votes){
-      client.hset('topics',to,(parseInt(from_votes) + parseInt(to_votes)), function(err,reply){
+  client.hget('topics',from, function(err,reply){
+    var from_votes = parseInt(reply) || 0; 
+    console.log("from_votes: "+ from_votes);  
+    client.hget('topics', to, function(err,reply){
+      var to_votes = parseInt(reply) || 0;
+      console.log("to_votes: "+ to_votes);  
+      client.hset('topics',to,(from_votes +to_votes), function(err,reply){
         console.log('deleting: '+from);
         client.hdel('topics',from);
         client.set("updated",date.getTime()+"");

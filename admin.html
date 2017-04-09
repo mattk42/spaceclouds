@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Cloudspaces</title>
+<body align=middle>
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" />
+<link rel="stylesheet" href="main.css" />
+<script
+  src="https://code.jquery.com/jquery-3.2.1.min.js"
+  integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+  crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+
+<script>
+
+function load_topics(){
+  $.get('/topics', function(responseText) {
+    var topics = JSON.parse(responseText);
+    $('select').find('option').remove()
+    for(var topic in topics){ 
+      var option = $('<option>', {value:topic, text:topic+" ("+topics[topic]+")"});
+      $('select').append(option);
+    }
+  });
+}
+$( document ).ready(function() {
+  $( "#delete_form" ).submit(function( event ) {
+    $.ajax({
+      url:"/admin/delete",
+      type:"POST",
+      data:JSON.stringify({topic: $('#delete_topic').val(), admin_token: $('#admin_token').val()}),
+      contentType:"application/json; charset=utf-8",
+      dataType:"json",
+      complete: function(){
+        load_topics();
+      }
+    });
+
+    event.preventDefault();
+  });
+
+ $( "#merge_form" ).submit(function( event ) {
+    $.ajax({
+      url:"/admin/merge",
+      type:"POST",
+      data:JSON.stringify({from: $('#from_topic').val(),to: $('#into_topic').val(), admin_token: $('#admin_token').val()}),
+      contentType:"application/json; charset=utf-8",
+      dataType:"json",
+      complete: function(){
+        load_topics();
+      }
+    });
+
+    event.preventDefault();
+  });
+
+  load_topics();
+});
+
+</script>
+
+<input id='admin_token' type='text' placeholder='Admin Token'></input>
+
+<h1>Delete</h1>
+<form id='delete_form'>
+  Topic: <select id="delete_topic"></select>
+  <input type='submit'></submit>
+</form><br>
+
+<h1>Merge</h1>
+<form id='merge_form'>
+  From: <select id='from_topic'></select><br>
+  Into: <select id='into_topic'></select><br>
+  <input type='submit'></submit>
+</form>
+
+
+
+</body>
