@@ -40,7 +40,15 @@ function send_data(clients){
          for (var key in words) {
            word_array.push({"text": key, "value": words[key], "size": 20*Math.sqrt(words[key]), rotation: ~~(Math.random() * -2) * 90});
          }
-         word_array = word_array.sort(function(a,b) { return b.value - a.value; });
+         word_array = word_array.sort(function(a,b) { 
+           var diff = b.value - a.value;
+           if ( diff == 0 ){
+              if(a.text < b.text) diff = -1;
+              if(a.text > b.text) diff = 1;
+              diff = 0;
+           }
+           return diff;
+         });
          new_topics = new_topics.slice(-20);
          var res = {topics: word_array, new_topics: new_topics, timestamp: updated }
          res = JSON.stringify(res);
@@ -68,7 +76,15 @@ app.get('/topics', function(req, res, next){
     for (var key in reply) {
       word_array.push({"text": key, "value": reply[key]});
     }
-    word_array = word_array.sort(function(a,b) { return b.value - a.value; });
+    word_array = word_array.sort(function(a,b) { 
+           var diff = b.value - a.value;
+           if ( diff == 0 ){
+              if(a.text < b.text) diff = -1;
+              if(a.text > b.text) diff = 1;
+              diff = 0;
+           }
+           return diff;
+     });
     res.send(JSON.stringify(word_array));
   });
 });
