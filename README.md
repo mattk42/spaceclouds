@@ -10,4 +10,5 @@ Redis
 ## How to run it
 1. Start your redis server
 2. export REDIS_URL=<connection string>
-3. run node server.js
+3. export ADMIN_TOKEN=<token>
+4. run node server.js

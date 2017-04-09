@@ -8,7 +8,9 @@ var new_topics = [];
 var last_sent_timestamp = 1;
 
 // Init redis client
-var client = require('redis').createClient(process.env.REDIS_URL);
+var client = require('redis').createClient(process.env.REDIS_URL || "redis://localhost:6379");
+var admin_token = process.env.ADMIN_TOKEN;
+var bodyParser = require('body-parser')
 
 client.on("error", function (err) {
     console.log("Error " + err);
@@ -16,6 +18,14 @@ client.on("error", function (err) {
 
 function toTitleCase(str){
     return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+}
+
+function admin_auth(req, res, next){
+  token = req.body.token;
+  if ( token != admin_token ){
+    res.status(401).send('You shall not pass.')
+  }
+  next();
 }
 
 function send_data(clients){
@@ -41,6 +51,8 @@ function send_data(clients){
   });
 }
 
+app.use( bodyParser.json() );
+
 app.get('/', function(req, res, next){
   res.sendFile(path.join(__dirname+'/index.html'));
 });
@@ -49,6 +61,30 @@ app.get('/clear', function(req, res, next){
   client.del('topics');
   client.del('new_topics');
   client.del('updated');
+  return res.redirect('/'); 
+});
+
+app.post('/admin/merge', admin_auth, function(req, res, next){
+  var date = new Date();
+  from = toTitleCase(req.body.from);
+  to = toTitleCase(req.body.to);
+  client.hget('topics',from, function(err,from_votes){
+    client.hget('topics', to, function(err,to_votes){
+      client.hset('topics',to,(parseInt(from_votes) + parseInt(to_votes)), function(err,reply){
+        console.log('deleting: '+from);
+        client.hdel('topics',from);
+        client.set("updated",date.getTime()+"");
+        return res.redirect('/'); 
+      });
+    });
+  });
+});
+
+app.post('/admin/delete', admin_auth,  function(req, res, next){
+  var date = new Date();
+  topic = toTitleCase(req.body.topic);
+  client.hdel('topics',topic);
+  client.set("updated",date.getTime()+"");
   return res.redirect('/'); 
 });
 
