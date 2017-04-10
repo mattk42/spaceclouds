@@ -18,7 +18,7 @@ client.on("error", function (err) {
 
 function toTitleCase(str){
     var topic = str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
-    return topic.trim();
+    return topic;
 }
 
 function admin_auth(req, res, next){
@@ -112,6 +112,7 @@ app.post('/admin/merge', admin_auth, function(req, res, next){
     var from_votes = parseInt(reply) || 0; 
     client.hget('topics', to, function(err,reply){
       var to_votes = parseInt(reply) || 0;
+      console.log("Merging "+from+"("+from_votes+") into "+to+"("+to_votes+"). For total ("+(from_votes+to_votes)+").");
       client.hset('topics',to,(from_votes +to_votes), function(err,reply){
         console.log('deleting: '+from);
         remove_topic(from);
@@ -133,7 +134,7 @@ function sendToAll(){
  
 app.ws('/', function(ws, req) {
   ws.on('message', function(msg) {
-    var topic = toTitleCase(msg);
+    var topic = toTitleCase(msg).trim();
     var date = new Date();
     client.hincrby("topics", topic,1, function(err,reply){
       if (reply == 1){
